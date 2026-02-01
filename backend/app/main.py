@@ -4,6 +4,7 @@ FinanceApp - Personal Finance Management API
 FastAPI application entry point with CORS, routes, and database initialization.
 """
 
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
@@ -28,13 +29,21 @@ app = FastAPI(
 )
 
 # CORS configuration for frontend
+origins = [
+    "http://localhost:3000",  # Next.js dev server
+    "http://localhost:5000",  # Flask local
+    "http://127.0.0.1:3000",
+    "http://localhost:8080",
+]
+
+# Add production frontend URL
+frontend_url = os.getenv("FRONTEND_URL")
+if frontend_url:
+    origins.append(frontend_url)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",  # Next.js dev server
-        "http://127.0.0.1:3000",
-        "http://localhost:8080",
-    ],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
