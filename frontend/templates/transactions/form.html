@@ -1,0 +1,170 @@
+{% extends "layout.html" %}
+
+{% block title %}Nova Transação - FinanceApp{% endblock %}
+{% block header_title %}Transações{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto pb-20 lg:pb-0">
+    <div class="gradient-card rounded-2xl p-6 lg:p-8">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h2 class="text-xl font-bold">Cadastro de Nova Transação</h2>
+                <p class="text-gray-400 text-sm">Preencha os dados abaixo para registrar a operação</p>
+            </div>
+            <a href="{{ url_for('transactions') }}"
+                class="p-2 text-gray-400 hover:text-white hover:bg-dark-200 rounded-lg">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                    </path>
+                </svg>
+            </a>
+        </div>
+
+        <!-- Form -->
+        <form method="POST" class="space-y-6">
+            <!-- Type Toggle -->
+            <div class="flex justify-center gap-4">
+                <label class="cursor-pointer">
+                    <input type="radio" name="tipo" value="saida_debito" class="hidden peer" checked
+                        onchange="toggleCredit()">
+                    <span
+                        class="peer-checked:bg-red-600/20 peer-checked:text-red-400 peer-checked:border-red-600 
+                        px-6 py-3 rounded-full border border-gray-700 text-gray-400 inline-flex items-center gap-2 transition-all">
+                        <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                        Despesa
+                    </span>
+                </label>
+                <label class="cursor-pointer">
+                    <input type="radio" name="tipo" value="entrada" class="hidden peer" onchange="toggleCredit()">
+                    <span
+                        class="peer-checked:bg-green-600/20 peer-checked:text-green-400 peer-checked:border-green-600 
+                        px-6 py-3 rounded-full border border-gray-700 text-gray-400 inline-flex items-center gap-2 transition-all">
+                        <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                        Receita
+                    </span>
+                </label>
+            </div>
+
+            <!-- Description -->
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Descrição / Título</label>
+                <input type="text" name="descricao" required
+                    class="w-full px-4 py-3 bg-dark-200 border border-gray-700 rounded-lg text-white placeholder-gray-500"
+                    placeholder="Ex: Supermercado, Aluguel, Salário...">
+            </div>
+
+            <!-- Value and Date -->
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Valor</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">R$</span>
+                        <input type="number" name="valor_total" step="0.01" min="0" required
+                            class="w-full pl-10 pr-4 py-3 bg-dark-200 border border-gray-700 rounded-lg text-white"
+                            placeholder="0,00">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Data</label>
+                    <input type="date" name="data_compra" required
+                        class="w-full px-4 py-3 bg-dark-200 border border-gray-700 rounded-lg text-white"
+                        value="{{ today }}">
+                </div>
+            </div>
+
+            <!-- Category and Payment Method -->
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Categoria</label>
+                    <select name="categoria" required
+                        class="w-full px-4 py-3 bg-dark-200 border border-gray-700 rounded-lg text-white">
+                        <option value="">Selecionar categoria</option>
+                        <option value="Alimentação">Alimentação</option>
+                        <option value="Moradia">Moradia</option>
+                        <option value="Transporte">Transporte</option>
+                        <option value="Saúde">Saúde</option>
+                        <option value="Educação">Educação</option>
+                        <option value="Lazer">Lazer</option>
+                        <option value="Renda">Renda</option>
+                        <option value="Investimentos">Investimentos</option>
+                        <option value="Outros">Outros</option>
+                    </select>
+                </div>
+                <div id="payment-method-container">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Forma de Pagamento</label>
+                    <select name="tipo_pagamento" id="tipo_pagamento" onchange="toggleCredit()"
+                        class="w-full px-4 py-3 bg-dark-200 border border-gray-700 rounded-lg text-white">
+                        <option value="debito">Débito / À Vista</option>
+                        <option value="credito">Crédito Parcelado</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Installments (for credit) -->
+            <div id="installments-container" class="hidden">
+                <label class="block text-sm font-medium text-gray-300 mb-2">Número de Parcelas</label>
+                <select name="num_parcelas"
+                    class="w-full px-4 py-3 bg-dark-200 border border-gray-700 rounded-lg text-white">
+                    {% for i in range(1, 13) %}
+                    <option value="{{ i }}">{{ i }}x {% if i > 1 %}(parcelas){% else %}(à vista){% endif %}</option>
+                    {% endfor %}
+                    <option value="18">18x (parcelas)</option>
+                    <option value="24">24x (parcelas)</option>
+                </select>
+            </div>
+
+            <!-- Notes -->
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Notas e Observações</label>
+                <textarea name="notas" rows="3"
+                    class="w-full px-4 py-3 bg-dark-200 border border-gray-700 rounded-lg text-white placeholder-gray-500 resize-none"
+                    placeholder="Adicione detalhes extras ou observações importantes..."></textarea>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex gap-4 pt-4">
+                <a href="{{ url_for('transactions') }}"
+                    class="flex-1 py-3 px-4 bg-dark-200 hover:bg-dark-100 text-gray-300 font-medium rounded-lg text-center transition-colors">
+                    Cancelar
+                </a>
+                <button type="submit"
+                    class="flex-1 py-3 px-4 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg transition-colors">
+                    Salvar Transação
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function toggleCredit() {
+        const tipoReceita = document.querySelector('input[name="tipo"][value="entrada"]').checked;
+        const tipoPagamento = document.getElementById('tipo_pagamento');
+        const installmentsContainer = document.getElementById('installments-container');
+        const paymentContainer = document.getElementById('payment-method-container');
+
+        if (tipoReceita) {
+            paymentContainer.classList.add('hidden');
+            installmentsContainer.classList.add('hidden');
+            // Change tipo to entrada
+        } else {
+            paymentContainer.classList.remove('hidden');
+
+            if (tipoPagamento.value === 'credito') {
+                installmentsContainer.classList.remove('hidden');
+                // Update the hidden tipo field
+                document.querySelector('input[name="tipo"][value="saida_debito"]').value = 'saida_credito';
+            } else {
+                installmentsContainer.classList.add('hidden');
+                document.querySelector('input[name="tipo"][value="saida_debito"]').value = 'saida_debito';
+            }
+        }
+    }
+
+    // Set today's date (Local Time)
+    const today = new Date();
+    const localDate = today.toLocaleDateString('en-CA'); // YYYY-MM-DD format in local time
+    document.querySelector('input[name="data_compra"]').value = localDate;
+</script>
+{% endblock %}

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{% block title %}FinanceApp{% endblock %}</title>
+
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        },
+                        dark: {
+                            100: '#1e293b',
+                            200: '#1a2234',
+                            300: '#151b28',
+                            400: '#0f1419',
+                            500: '#0a0e14',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+
+    <style>
+        .gradient-card {
+            background: linear-gradient(180deg, #1e293b 0%, #151b28 100%);
+        }
+
+        .glass {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .progress-bar {
+            transition: width 0.5s ease-in-out;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1a2234;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #3b82f6;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+
+<body class="bg-dark-400 text-white min-h-screen">
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <aside class="hidden lg:flex lg:flex-col lg:w-64 bg-dark-300 border-r border-gray-800">
+            <!-- Logo -->
+            <div class="p-6 border-b border-gray-800">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
+                        <span class="text-lg font-bold">F</span>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-lg">FinanceApp</h1>
+                        <span class="text-xs text-gray-500">Gestão Pessoal</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <nav class="flex-1 p-4 space-y-2">
+                <a href="{{ url_for('dashboard') }}"
+                    class="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors
+                   {% if request.endpoint == 'dashboard' %}bg-primary-600 text-white{% else %}text-gray-400 hover:bg-dark-200 hover:text-white{% endif %}">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z">
+                        </path>
+                    </svg>
+                    Principal
+                </a>
+
+                <a href="{{ url_for('transactions') }}"
+                    class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-dark-200 rounded-xl transition-colors {% if request.endpoint == 'transactions' %}bg-primary-600/10 text-primary-500{% endif %}">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2">
+                        </path>
+                    </svg>
+                    <span class="font-medium">Transações</span>
+                </a>
+
+                <a href="{{ url_for('monthly_report') }}"
+                    class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-dark-200 rounded-xl transition-colors {% if request.endpoint == 'monthly_report' %}bg-primary-600/10 text-primary-500{% endif %}">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                        </path>
+                    </svg>
+                    <span class="font-medium">Histórico Mensal</span>
+                </a>
+
+                <a href="{{ url_for('savings') }}"
+                    class="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors
+                   {% if request.endpoint in ['savings', 'new_savings_goal'] %}bg-primary-600 text-white{% else %}text-gray-400 hover:bg-dark-200 hover:text-white{% endif %}">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z">
+                        </path>
+                    </svg>
+                    Cofrinhos
+                </a>
+            </nav>
+
+            <!-- User -->
+            <div class="p-4 border-t border-gray-800">
+                <a href="{{ url_for('logout') }}"
+                    class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-red-400 rounded-lg hover:bg-dark-200 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
+                        </path>
+                    </svg>
+                    Sair
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col">
+            <!-- Top Bar -->
+            <header class="bg-dark-300 border-b border-gray-800 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xl font-bold">{% block header_title %}Principal{% endblock %}</h2>
+
+                    <div class="flex items-center gap-4">
+                        <!-- User info -->
+                        <div class="flex items-center gap-3">
+                            <span class="text-sm text-gray-400">{{ user.nome if user else 'Usuário' }}</span>
+                            <div class="w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center">
+                                <span class="font-bold">{{ user.nome[0] if user and user.nome else 'U' }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <main class="flex-1 p-6 overflow-auto">
+                {% block content %}{% endblock %}
+            </main>
+
+            <!-- Mobile Bottom Nav -->
+            <nav
+                class="lg:hidden fixed bottom-0 left-0 right-0 bg-dark-300 border-t border-gray-800 px-4 py-2 flex justify-around">
+                <a href="{{ url_for('dashboard') }}"
+                    class="flex flex-col items-center p-2 {% if request.endpoint == 'dashboard' %}text-primary-500{% else %}text-gray-400{% endif %}">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6z"></path>
+                    </svg>
+                    <span class="text-xs mt-1">Principal</span>
+                </a>
+                <a href="{{ url_for('transactions') }}"
+                    class="flex flex-col items-center p-2 {% if 'transaction' in request.endpoint %}text-primary-500{% else %}text-gray-400{% endif %}">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"></path>
+                    </svg>
+                    <span class="text-xs mt-1">Transações</span>
+                </a>
+                <a href="{{ url_for('new_transaction') }}" class="flex flex-col items-center p-2 -mt-6">
+                    <div class="w-14 h-14 bg-primary-600 rounded-full flex items-center justify-center shadow-lg">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4">
+                            </path>
+                        </svg>
+                    </div>
+                </a>
+                <a href="{{ url_for('savings') }}"
+                    class="flex flex-col items-center p-2 {% if 'saving' in request.endpoint %}text-primary-500{% else %}text-gray-400{% endif %}">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2"></path>
+                    </svg>
+                    <span class="text-xs mt-1">Cofrinhos</span>
+                </a>
+                <a href="{{ url_for('logout') }}" class="flex flex-col items-center p-2 text-gray-400">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 16l4-4m0 0l-4-4m4 4H7"></path>
+                    </svg>
+                    <span class="text-xs mt-1">Sair</span>
+                </a>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Toast container -->
+    <div id="toast-container" class="fixed bottom-20 lg:bottom-4 right-4 z-50 space-y-2">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="fade-in px-4 py-3 rounded-lg shadow-lg flex items-center gap-3
+                        {% if category == 'success' %}bg-green-600
+                        {% elif category == 'error' %}bg-red-600
+                        {% elif category == 'warning' %}bg-yellow-600
+                        {% else %}bg-blue-600{% endif %}" onclick="this.remove()">
+            <span>{{ message }}</span>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+    </div>
+
+    <script>
+        setTimeout(() => {
+            document.querySelectorAll('#toast-container > div').forEach(t => {
+                t.style.opacity = '0';
+                setTimeout(() => t.remove(), 300);
+            });
+        }, 5000);
+    </script>
+</body>
+
+</html>

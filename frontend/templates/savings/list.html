@@ -1,0 +1,203 @@
+{% extends "layout.html" %}
+
+{% block title %}Cofrinhos - FinanceApp{% endblock %}
+{% block header_title %}Cofrinhos{% endblock %}
+
+{% block content %}
+<div class="space-y-6 pb-20 lg:pb-0">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold">Suas Metas de Economia</h1>
+            <p class="text-gray-400 text-sm">Organize seu dinheiro em cofrinhos virtuais</p>
+        </div>
+        <a href="{{ url_for('new_savings_goal') }}"
+            class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary-600 hover:bg-primary-700 rounded-lg font-medium transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            Nova Meta
+        </a>
+    </div>
+
+    <!-- Goals Grid -->
+    {% if goals %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for goal in goals %}
+        <div class="gradient-card rounded-2xl p-6 fade-in" id="goal-{{ goal.id }}">
+            <!-- Header -->
+            <div class="flex items-start justify-between mb-4">
+                <div>
+                    <h3 class="font-bold text-lg">{{ goal.nome_objetivo }}</h3>
+                    {% if goal.descricao %}
+                    <p class="text-gray-500 text-sm">{{ goal.descricao }}</p>
+                    {% endif %}
+                </div>
+                <div class="w-10 h-10 bg-primary-600/20 rounded-xl flex items-center justify-center">
+                    <svg class="w-5 h-5 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z">
+                        </path>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Progress -->
+            <div class="mb-4">
+                <div class="flex items-center justify-between text-sm mb-2">
+                    <span class="text-gray-400">Progresso</span>
+                    <span class="text-primary-400 font-semibold">{{ "%.1f"|format(goal.progress_percentage|float)
+                        }}%</span>
+                </div>
+                <div class="w-full bg-dark-400 rounded-full h-3">
+                    <div class="bg-gradient-to-r from-primary-600 to-primary-400 h-3 rounded-full progress-bar"
+                        style="width: {{ goal.progress_percentage }}%"></div>
+                </div>
+            </div>
+
+            <!-- Values -->
+            <div class="flex justify-between mb-6">
+                <div>
+                    <p class="text-2xl font-bold text-green-400">R$ {{ "%.2f"|format(goal.valor_atual|float) }}</p>
+                    <p class="text-xs text-gray-500">Guardado</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-lg font-medium text-gray-400">R$ {{ "%.2f"|format(goal.valor_meta|float) }}</p>
+                    <p class="text-xs text-gray-500">Meta</p>
+                </div>
+            </div>
+
+            {% if goal.data_limite %}
+            <div class="mb-4 text-sm text-gray-400">
+                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                    </path>
+                </svg>
+                Prazo: {{ goal.data_limite }}
+            </div>
+            {% endif %}
+
+            <!-- Actions -->
+            <div class="flex gap-2">
+                <button onclick="openDepositModal({{ goal.id }}, '{{ goal.nome_objetivo }}')"
+                    class="flex-1 py-2 px-4 bg-green-600/20 hover:bg-green-600/30 text-green-400 rounded-lg text-sm font-medium transition-colors">
+                    Depositar
+                </button>
+                <button onclick="openWithdrawModal({{ goal.id }}, '{{ goal.nome_objetivo }}', {{ goal.valor_atual }})"
+                    class="flex-1 py-2 px-4 bg-dark-200 hover:bg-dark-100 text-gray-300 rounded-lg text-sm font-medium transition-colors">
+                    Resgatar
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <!-- Empty State -->
+    <div class="gradient-card rounded-2xl p-12 text-center">
+        <svg class="w-16 h-16 text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z">
+            </path>
+        </svg>
+        <h3 class="text-lg font-medium mb-2">Nenhum cofrinho criado</h3>
+        <p class="text-gray-500 mb-4">Comece a guardar dinheiro para seus objetivos</p>
+        <a href="{{ url_for('new_savings_goal') }}"
+            class="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 hover:bg-primary-700 rounded-lg font-medium">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            Criar Primeiro Cofrinho
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Deposit Modal -->
+<div id="deposit-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+    <div class="bg-dark-300 rounded-2xl p-6 w-full max-w-md mx-4">
+        <h3 class="text-lg font-bold mb-4">Depositar em <span id="deposit-goal-name"></span></h3>
+        <form id="deposit-form" method="POST">
+            <div class="mb-4">
+                <label class="block text-sm text-gray-400 mb-2">Valor a depositar</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">R$</span>
+                    <input type="number" name="valor" step="0.01" min="0.01" required
+                        class="w-full pl-10 pr-4 py-3 bg-dark-200 border border-gray-700 rounded-lg text-white"
+                        placeholder="0,00">
+                </div>
+            </div>
+            <div class="flex gap-3">
+                <button type="button" onclick="closeModals()"
+                    class="flex-1 py-3 bg-dark-200 hover:bg-dark-100 text-gray-300 rounded-lg font-medium">
+                    Cancelar
+                </button>
+                <button type="submit"
+                    class="flex-1 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium">
+                    Depositar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Withdraw Modal -->
+<div id="withdraw-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+    <div class="bg-dark-300 rounded-2xl p-6 w-full max-w-md mx-4">
+        <h3 class="text-lg font-bold mb-4">Resgatar de <span id="withdraw-goal-name"></span></h3>
+        <p class="text-sm text-gray-400 mb-4">Saldo disponível: <span id="withdraw-available"
+                class="text-green-400"></span></p>
+        <form id="withdraw-form" method="POST">
+            <div class="mb-4">
+                <label class="block text-sm text-gray-400 mb-2">Valor a resgatar</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">R$</span>
+                    <input type="number" name="valor" step="0.01" min="0.01" required
+                        class="w-full pl-10 pr-4 py-3 bg-dark-200 border border-gray-700 rounded-lg text-white"
+                        placeholder="0,00">
+                </div>
+            </div>
+            <div class="flex gap-3">
+                <button type="button" onclick="closeModals()"
+                    class="flex-1 py-3 bg-dark-200 hover:bg-dark-100 text-gray-300 rounded-lg font-medium">
+                    Cancelar
+                </button>
+                <button type="submit" class="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium">
+                    Resgatar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openDepositModal(goalId, goalName) {
+        document.getElementById('deposit-goal-name').textContent = goalName;
+        document.getElementById('deposit-form').action = `/savings/${goalId}/deposit`;
+        document.getElementById('deposit-modal').classList.remove('hidden');
+        document.getElementById('deposit-modal').classList.add('flex');
+    }
+
+    function openWithdrawModal(goalId, goalName, available) {
+        document.getElementById('withdraw-goal-name').textContent = goalName;
+        document.getElementById('withdraw-available').textContent = `R$ ${available.toFixed(2)}`;
+        document.getElementById('withdraw-form').action = `/savings/${goalId}/withdraw`;
+        document.getElementById('withdraw-modal').classList.remove('hidden');
+        document.getElementById('withdraw-modal').classList.add('flex');
+    }
+
+    function closeModals() {
+        document.getElementById('deposit-modal').classList.add('hidden');
+        document.getElementById('deposit-modal').classList.remove('flex');
+        document.getElementById('withdraw-modal').classList.add('hidden');
+        document.getElementById('withdraw-modal').classList.remove('flex');
+    }
+
+    // Close modals on backdrop click
+    document.querySelectorAll('#deposit-modal, #withdraw-modal').forEach(modal => {
+        modal.addEventListener('click', function (e) {
+            if (e.target === this) closeModals();
+        });
+    });
+</script>
+{% endblock %}

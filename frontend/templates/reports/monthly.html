@@ -1,0 +1,233 @@
+{% extends "layout.html" %}
+
+{% block title %}Histórico Mensal - FinanceApp{% endblock %}
+{% block header_title %}
+<div class="flex items-center justify-between w-full">
+    <span>Histórico Mensal</span>
+    <form action="{{ url_for('monthly_report') }}" method="get"
+        class="flex items-center gap-4 bg-dark-200 rounded-lg p-1 border border-gray-700">
+        <button type="submit" name="mes" value="{{ mes - 1 if mes > 1 else 12 }}"
+            onclick="this.form.ano.value = {{ ano if mes > 1 else ano - 1 }}"
+            class="p-1 hover:bg-dark-100 rounded text-gray-400 hover:text-white transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+        </button>
+
+        <div class="flex items-center gap-2">
+            <select name="mes" onchange="this.form.submit()"
+                class="bg-transparent text-sm font-medium focus:outline-none appearance-none cursor-pointer">
+                {% set meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto',
+                'Setembro', 'Outubro', 'Novembro', 'Dezembro'] %}
+                {% for i in range(1, 13) %}
+                <option value="{{ i }}" class="bg-dark-200" {% if mes==i %}selected{% endif %}>{{ meses[i-1] }}</option>
+                {% endfor %}
+            </select>
+            <span class="text-gray-600">/</span>
+            <select name="ano" onchange="this.form.submit()"
+                class="bg-transparent text-sm font-medium focus:outline-none appearance-none cursor-pointer">
+                {% for y in range(ano-1, ano+2) %}
+                <option value="{{ y }}" class="bg-dark-200" {% if ano==y %}selected{% endif %}>{{ y }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <button type="submit" name="mes" value="{{ mes + 1 if mes < 12 else 1 }}"
+            onclick="this.form.ano.value = {{ ano if mes < 12 else ano + 1 }}"
+            class="p-1 hover:bg-dark-100 rounded text-gray-400 hover:text-white transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+        </button>
+    </form>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-8 pb-20 lg:pb-0">
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Total Recebido -->
+        <div
+            class="bg-dark-200 border border-gray-800 rounded-2xl p-6 relative overflow-hidden group hover:border-gray-700 transition-colors">
+            <div class="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
+                <svg class="w-24 h-24 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12">
+                    </path>
+                </svg>
+            </div>
+            <p class="text-gray-400 text-sm mb-2">Total Recebido</p>
+            <div class="flex items-end gap-3">
+                <h3 class="text-3xl font-bold text-white">R$ {{ "%.2f"|format(summary.total_entradas|default(0)|float)
+                    }}</h3>
+                <div class="mb-1 w-8 h-8 bg-green-500/10 rounded flex items-center justify-center text-green-500">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Gasto -->
+        <div
+            class="bg-dark-200 border border-gray-800 rounded-2xl p-6 relative overflow-hidden group hover:border-gray-700 transition-colors">
+            <div class="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
+                <svg class="w-24 h-24 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M17 13l-5 5m0 0l-5-5m5 5V6"></path>
+                </svg>
+            </div>
+            <p class="text-gray-400 text-sm mb-2">Total Gasto</p>
+            <div class="flex items-end gap-3">
+                <h3 class="text-3xl font-bold text-white">R$ {{ "%.2f"|format(summary.total_saidas|default(0)|float) }}
+                </h3>
+                <div class="mb-1 w-8 h-8 bg-red-500/10 rounded flex items-center justify-center text-red-500">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Balanço Mensal -->
+        <div
+            class="bg-dark-200 border border-gray-800 rounded-2xl p-6 relative overflow-hidden group hover:border-gray-700 transition-colors">
+            <div class="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
+                <svg class="w-24 h-24 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3">
+                    </path>
+                </svg>
+            </div>
+            <p class="text-gray-400 text-sm mb-2">Balanço Mensal</p>
+            <div class="flex items-end gap-3">
+                <h3
+                    class="text-3xl font-bold {% if (summary.total_entradas|default(0)|float - summary.total_saidas|default(0)|float) >= 0 %}text-blue-400{% else %}text-red-400{% endif %}">
+                    R$ {{ "%.2f"|format(summary.total_entradas|default(0)|float - summary.total_saidas|default(0)|float)
+                    }}
+                </h3>
+                <div class="mb-1 w-8 h-8 bg-blue-500/10 rounded flex items-center justify-center text-blue-500">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                        </path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detalhamento de Gastos -->
+    <div class="bg-dark-200 border border-gray-800 rounded-2xl overflow-hidden">
+        <div class="p-6 border-b border-gray-800 flex justify-between items-center">
+            <div>
+                <h3 class="text-lg font-bold">Detalhamento de Transações</h3>
+                <p class="text-sm text-gray-500">Lista detalhada de todas as operações do mês</p>
+            </div>
+            <button onclick="window.print()"
+                class="px-4 py-2 bg-dark-300 hover:bg-dark-400 text-sm font-medium rounded-lg text-gray-300 transition-colors flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z">
+                    </path>
+                </svg>
+                Imprimir Relatório
+            </button>
+        </div>
+
+        {% if transactions %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="text-gray-500 uppercase text-xs border-b border-gray-800">
+                        <th class="px-6 py-4 text-left font-semibold">Data</th>
+                        <th class="px-6 py-4 text-left font-semibold">Descrição</th>
+                        <th class="px-6 py-4 text-left font-semibold">Categoria</th>
+                        <th class="px-6 py-4 text-left font-semibold">Tipo</th>
+                        <th class="px-6 py-4 text-right font-semibold">Valor</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-800">
+                    {% for t in transactions %}
+                    <tr class="hover:bg-dark-100/50 transition-colors">
+                        <td class="px-6 py-4 text-gray-400 font-mono">{{ t.data_compra_formatada|default(t.data_compra)
+                            }}</td>
+                        <td class="px-6 py-4 font-medium text-white">{{ t.descricao }}</td>
+                        <td class="px-6 py-4">
+                            <span class="px-2 py-1 bg-dark-300 rounded text-xs text-gray-300">{{ t.categoria }}</span>
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if t.tipo == 'entrada' %}
+                            <span
+                                class="text-green-400 text-xs font-medium bg-green-900/20 px-2 py-1 rounded">Receita</span>
+                            {% elif t.tipo == 'saida_debito' %}
+                            <span class="text-red-400 text-xs font-medium bg-red-900/20 px-2 py-1 rounded">Débito</span>
+                            {% else %}
+                            <span
+                                class="text-purple-400 text-xs font-medium bg-purple-900/20 px-2 py-1 rounded">Crédito</span>
+                            {% endif %}
+                        </td>
+                        <td
+                            class="px-6 py-4 text-right font-bold {% if t.tipo == 'entrada' %}text-green-400{% else %}text-red-400{% endif %}">
+                            R$ {{ "%.2f"|format(t.valor_total|float) }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="p-6 bg-dark-300/30 border-t border-gray-800 flex justify-between items-center">
+            <span class="text-gray-400 font-medium">TOTAL MOVIMENTADO</span>
+            <span class="text-xl font-bold text-white">R$ {{ "%.2f"|format(categories.total|default(0)|float) }}</span>
+        </div>
+        {% else %}
+        <div class="p-12 text-center text-gray-500">
+            Nenhuma transação encontrada para este mês.
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Resumo por Categoria -->
+    <div class="bg-dark-200 border border-gray-800 rounded-2xl p-6">
+        <h3 class="text-lg font-bold mb-6">Resumo por Categoria</h3>
+        <div class="space-y-6">
+            {% for cat in categories.categorias %}
+            <div class="space-y-2">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center
+                            {% if loop.index % 4 == 0 %}bg-purple-600/20 text-purple-400
+                            {% elif loop.index % 4 == 1 %}bg-blue-600/20 text-blue-400
+                            {% elif loop.index % 4 == 2 %}bg-green-600/20 text-green-400
+                            {% else %}bg-orange-600/20 text-orange-400{% endif %}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z">
+                                </path>
+                            </svg>
+                        </div>
+                        <span class="font-medium text-white">{{ cat.categoria }}</span>
+                    </div>
+                    <div class="text-right">
+                        <span class="block font-bold text-white">R$ {{ "%.2f"|format(cat.valor_total|float) }}</span>
+                        <span class="text-xs text-gray-500">{{ "%.0f"|format(cat.percentual|float) }}%</span>
+                    </div>
+                </div>
+                <!-- Progress Bar -->
+                <div class="h-2 w-full bg-dark-400 rounded-full overflow-hidden">
+                    <div class="h-full rounded-full 
+                        {% if loop.index % 4 == 0 %}bg-purple-500
+                        {% elif loop.index % 4 == 1 %}bg-blue-500
+                        {% elif loop.index % 4 == 2 %}bg-green-500
+                        {% else %}bg-orange-500{% endif %}" style="width: {{ cat.percentual|float }}%"></div>
+                </div>
+            </div>
+            {% else %}
+            <p class="text-center text-gray-500">Nenhum gasto registrado por categoria.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

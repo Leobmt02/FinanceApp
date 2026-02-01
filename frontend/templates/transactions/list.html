@@ -1,0 +1,154 @@
+{% extends "layout.html" %}
+
+{% block title %}Transações - FinanceApp{% endblock %}
+{% block header_title %}Transações{% endblock %}
+
+{% block content %}
+<div class="space-y-6 pb-20 lg:pb-0">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold">Suas Transações</h1>
+            <p class="text-gray-400 text-sm">Gerencie suas receitas e despesas</p>
+        </div>
+        <a href="{{ url_for('new_transaction') }}"
+            class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary-600 hover:bg-primary-700 rounded-lg font-medium transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            Nova Transação
+        </a>
+    </div>
+
+    <!-- Filters -->
+    <div class="gradient-card rounded-xl p-4 flex flex-wrap gap-4">
+        <select id="filter-tipo" onchange="applyFilters()"
+            class="bg-dark-200 border border-gray-700 rounded-lg px-4 py-2 text-sm">
+            <option value="">Todos os tipos</option>
+            <option value="entrada" {% if request.args.get('tipo')=='entrada' %}selected{% endif %}>Receitas</option>
+            <option value="saida_debito" {% if request.args.get('tipo')=='saida_debito' %}selected{% endif %}>Débito
+            </option>
+            <option value="saida_credito" {% if request.args.get('tipo')=='saida_credito' %}selected{% endif %}>Crédito
+            </option>
+        </select>
+
+        <select id="filter-categoria" onchange="applyFilters()"
+            class="bg-dark-200 border border-gray-700 rounded-lg px-4 py-2 text-sm">
+            <option value="">Todas as categorias</option>
+            {% for cat in categories %}
+            <option value="{{ cat }}" {% if request.args.get('categoria')==cat %}selected{% endif %}>{{ cat }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- Transactions List -->
+    <div class="gradient-card rounded-2xl overflow-hidden">
+        {% if transactions %}
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-dark-200">
+                    <tr class="text-gray-500 text-xs uppercase">
+                        <th class="text-left p-4">Descrição</th>
+                        <th class="text-left p-4 hidden md:table-cell">Categoria</th>
+                        <th class="text-left p-4 hidden md:table-cell">Data</th>
+                        <th class="text-left p-4">Tipo</th>
+                        <th class="text-left p-4">Status</th>
+                        <th class="text-right p-4">Valor</th>
+                        <th class="text-right p-4 w-20">Ações</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-800">
+                    {% for t in transactions %}
+                    <tr class="hover:bg-dark-200/50 transition-colors" id="transaction-{{ t.id }}">
+                        <td class="p-4">
+                            <div>
+                                <span class="font-medium">{{ t.descricao }}</span>
+                                {% if t.num_parcelas > 1 %}
+                                <span class="ml-2 text-xs text-primary-400">({{ t.num_parcelas }}x)</span>
+                                {% endif %}
+                            </div>
+                            <span class="text-xs text-gray-500 md:hidden">{{ t.categoria }} · {{ t.data_compra }}</span>
+                        </td>
+                        <td class="p-4 hidden md:table-cell text-gray-400">{{ t.categoria }}</td>
+                        <td class="p-4 hidden md:table-cell text-gray-400">{{ t.data_compra }}</td>
+                        <td class="p-4">
+                            <span class="px-2 py-1 text-xs rounded-full
+                                {% if t.tipo == 'entrada' %}bg-green-600/20 text-green-400
+                                {% elif t.tipo == 'saida_debito' %}bg-blue-600/20 text-blue-400
+                                {% else %}bg-purple-600/20 text-purple-400{% endif %}">
+                                {% if t.tipo == 'entrada' %}Receita
+                                {% elif t.tipo == 'saida_debito' %}Débito
+                                {% else %}Crédito{% endif %}
+                            </span>
+                        </td>
+                        <td class="p-4">
+                            <span class="px-2 py-1 text-xs rounded-full
+                                {% if t.status == 'RECEBIDO' %}bg-green-600/20 text-green-400
+                                {% elif t.status == 'CONFIRMADO' %}bg-blue-600/20 text-blue-400
+                                {% else %}bg-yellow-600/20 text-yellow-400{% endif %}">
+                                {{ t.status }}
+                            </span>
+                        </td>
+                        <td class="p-4 text-right font-semibold
+                            {% if t.tipo == 'entrada' %}text-green-400{% else %}text-red-400{% endif %}">
+                            {% if t.tipo == 'entrada' %}+{% else %}-{% endif %}R$ {{ "%.2f"|format(t.valor_total|float)
+                            }}
+                        </td>
+                        <td class="p-4 text-right">
+                            <button onclick="deleteTransaction({{ t.id }})"
+                                class="p-2 text-gray-400 hover:text-red-400 hover:bg-red-600/10 rounded-lg transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                    </path>
+                                </svg>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-12 text-center">
+            <svg class="w-16 h-16 text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2">
+                </path>
+            </svg>
+            <h3 class="text-lg font-medium mb-2">Nenhuma transação encontrada</h3>
+            <p class="text-gray-500 mb-4">Comece registrando sua primeira transação</p>
+            <a href="{{ url_for('new_transaction') }}"
+                class="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 hover:bg-primary-700 rounded-lg font-medium">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                Nova Transação
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    function applyFilters() {
+        const tipo = document.getElementById('filter-tipo').value;
+        const categoria = document.getElementById('filter-categoria').value;
+
+        let url = '{{ url_for("transactions") }}?';
+        if (tipo) url += `tipo=${tipo}&`;
+        if (categoria) url += `categoria=${encodeURIComponent(categoria)}&`;
+
+        window.location.href = url;
+    }
+
+    function deleteTransaction(id) {
+        if (confirm('Tem certeza que deseja excluir esta transação?')) {
+            fetch(`/transactions/${id}/delete`, { method: 'POST' })
+                .then(() => {
+                    document.getElementById(`transaction-${id}`).remove();
+                });
+        }
+    }
+</script>
+{% endblock %}
